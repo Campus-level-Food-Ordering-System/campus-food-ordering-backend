@@ -1,6 +1,7 @@
 package com.campusfood.backend.enums;
 
-public enum  Role {
+public enum Role {
     ADMIN,
-    USER
+    USER,
+    VENDOR
 }
