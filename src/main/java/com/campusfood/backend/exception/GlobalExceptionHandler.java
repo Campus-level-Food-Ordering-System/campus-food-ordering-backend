@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.campusfood.backend.utils.ApiError;
 
-import tools.jackson.databind.exc.InvalidFormatException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -28,19 +28,15 @@ public class GlobalExceptionHandler {
         Map<String, String> fieldErrors = new HashMap<>();
 
         ex.getBindingResult()
-          .getFieldErrors()
-          .forEach(error ->
-              fieldErrors.put(
-                  error.getField(),
-                  error.getDefaultMessage()
-              )
-          );
+                .getFieldErrors()
+                .forEach(error -> fieldErrors.put(
+                        error.getField(),
+                        error.getDefaultMessage()));
 
         ApiError apiError = new ApiError(
                 "Validation failed",
                 HttpStatus.BAD_REQUEST.value(),
-                fieldErrors
-        );
+                fieldErrors);
 
         return ResponseEntity
                 .badRequest()
@@ -57,8 +53,7 @@ public class GlobalExceptionHandler {
         ApiError apiError = new ApiError(
                 ex.getMessage(),
                 ex.getStatus().value(),
-                null
-        );
+                null);
 
         return ResponseEntity
                 .status(ex.getStatus())
@@ -74,8 +69,7 @@ public class GlobalExceptionHandler {
         ApiError error = new ApiError(
                 ex.getMessage() != null ? ex.getMessage() : "Internal Server Error",
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                null
-        );
+                null);
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -86,23 +80,22 @@ public class GlobalExceptionHandler {
     // 4. ENUM ERRORS
     // =========================
     @ExceptionHandler(HttpMessageNotReadableException.class)
-public ResponseEntity<ApiError> handleJsonError(HttpMessageNotReadableException ex) {
-    if (ex.getCause() instanceof InvalidFormatException ife && ife.getTargetType().isEnum()) {
-        
-        // getPathReference() returns the field path as a String (e.g., "role")
-        String path = ife.getPathReference(); 
-        // Clean up the path string if it contains class names
-        String fieldName = path.contains("[") ? path.substring(path.lastIndexOf("[\"") + 2, path.lastIndexOf("\"]")) : path;
-        
-        String options = Arrays.toString(ife.getTargetType().getEnumConstants());
-        
-        return ResponseEntity.badRequest().body(new ApiError(
-            "Invalid value for field: " + fieldName + ". Must be one of: " + options, 
-            400, 
-            null));
+    public ResponseEntity<ApiError> handleJsonError(HttpMessageNotReadableException ex) {
+        if (ex.getCause() instanceof InvalidFormatException ife && ife.getTargetType().isEnum()) {
+
+            // getPathReference() returns the field path as a String (e.g., "role")
+            String path = ife.getPathReference();
+            // Clean up the path string if it contains class names
+            String fieldName = path.contains("[") ? path.substring(path.lastIndexOf("[\"") + 2, path.lastIndexOf("\"]"))
+                    : path;
+
+            String options = Arrays.toString(ife.getTargetType().getEnumConstants());
+
+            return ResponseEntity.badRequest().body(new ApiError(
+                    "Invalid value for field: " + fieldName + ". Must be one of: " + options,
+                    400,
+                    null));
+        }
+        return ResponseEntity.badRequest().body(new ApiError("Malformed JSON", 400, null));
     }
-    return ResponseEntity.badRequest().body(new ApiError("Malformed JSON", 400, null));
 }
-}
-
-
