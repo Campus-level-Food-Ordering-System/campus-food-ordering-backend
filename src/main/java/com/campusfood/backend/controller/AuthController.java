@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.campusfood.backend.dto.auth.SigninRequestDTO;
+import com.campusfood.backend.dto.auth.SigninResponseDTO;
 import com.campusfood.backend.dto.auth.SignupRequestDTO;
 import com.campusfood.backend.dto.auth.SignupResponseDTO;
 import com.campusfood.backend.entity.User;
@@ -35,6 +37,15 @@ public class AuthController {
         SignupResponseDTO response = authService.signup(request);
 
         return ApiResponse.of("User signed up successfully", 201, response);
+    }
+
+    @PostMapping("/signin")
+    public ApiResponse<SigninResponseDTO> signin(
+            @Valid @RequestBody SigninRequestDTO request) {
+
+        SigninResponseDTO response = authService.signin(request);
+
+        return ApiResponse.of("User signed in successfully", 200, response);
     }
 
     // TEMP

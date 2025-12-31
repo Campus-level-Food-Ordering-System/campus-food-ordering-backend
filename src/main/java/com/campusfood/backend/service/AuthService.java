@@ -6,13 +6,18 @@ import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.campusfood.backend.dto.auth.SigninRequestDTO;
+import com.campusfood.backend.dto.auth.SigninResponseDTO;
 import com.campusfood.backend.dto.auth.SignupRequestDTO;
 import com.campusfood.backend.dto.auth.SignupResponseDTO;
 import com.campusfood.backend.entity.User;
 import com.campusfood.backend.enums.AuthType;
 import com.campusfood.backend.enums.Role;
 import com.campusfood.backend.exception.auth.EmailAlreadyExistsException;
+import com.campusfood.backend.exception.auth.InvalidCredentialsException;
 import com.campusfood.backend.repository.AuthRepository;
+
+import jakarta.validation.Valid;
 
 @Service
 public class AuthService {
@@ -70,6 +75,42 @@ public class AuthService {
                 savedUser.getEmail(),
                 savedUser.getRole(),
                 savedUser.isEmailVerified());
+    }
+
+    public SigninResponseDTO signin(SigninRequestDTO request) {
+
+        // 1️⃣ Find user by email
+        User user = authRepository.findByEmail(request.getEmail())
+                .orElseThrow(InvalidCredentialsException::new);
+
+        // 2️⃣ Check auth type
+        if (user.getAuthType() == AuthType.PASSWORD) {
+
+            // Password must exist
+            if (user.getPassword() == null ||
+                    !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                throw new InvalidCredentialsException();
+            }
+        } else {
+            // OAuth users (Google) should not login via password
+            throw new IllegalArgumentException(
+                    "This account uses " + user.getAuthType() + " login");
+        }
+
+        // 3️⃣ (Optional) check email verification
+        if (!user.isEmailVerified()) {
+            throw new IllegalStateException("Email not verified");
+        }
+
+        // 4️⃣ Return response (no JWT yet)
+        return SigninResponseDTO.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .accessToken(null) // add later
+                .refreshToken(null) // add later
+                .build();
     }
 
     // TEMP: admin-only later
