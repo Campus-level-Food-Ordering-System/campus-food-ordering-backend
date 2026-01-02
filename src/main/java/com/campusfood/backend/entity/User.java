@@ -47,6 +47,11 @@ public class User {
     @Column(nullable = true)
     private String yearOfStudy;
 
-    private String emailVerificationToken;
+    @Column(name = "verification_code")
+    private String verificationCode;
+
+    @Column(name = "verification_code_expires_at")
+    private java.time.LocalDateTime verificationCodeExpiresAt;
+
     private String passwordResetToken;
 }

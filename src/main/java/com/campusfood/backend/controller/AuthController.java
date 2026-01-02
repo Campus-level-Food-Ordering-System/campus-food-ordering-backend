@@ -10,10 +10,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.campusfood.backend.dto.auth.ResendCodeRequestDTO;
 import com.campusfood.backend.dto.auth.SigninRequestDTO;
 import com.campusfood.backend.dto.auth.SigninResponseDTO;
 import com.campusfood.backend.dto.auth.SignupRequestDTO;
 import com.campusfood.backend.dto.auth.SignupResponseDTO;
+import com.campusfood.backend.dto.auth.VerifyEmailRequestDTO;
 import com.campusfood.backend.entity.User;
 import com.campusfood.backend.service.AuthService;
 import com.campusfood.backend.utils.ApiResponse;
@@ -46,6 +48,24 @@ public class AuthController {
         SigninResponseDTO response = authService.signin(request);
 
         return ApiResponse.of("User signed in successfully", 200, response);
+    }
+
+    @PostMapping("/verify-email")
+    public ApiResponse<Void> verifyEmail(
+            @Valid @RequestBody VerifyEmailRequestDTO request) {
+
+        authService.verifyEmail(request.getEmail(), request.getCode());
+
+        return ApiResponse.of("Email verified successfully", 200, null);
+    }
+
+    @PostMapping("/resend-verification-code")
+    public ApiResponse<Void> resendVerificationCode(
+            @Valid @RequestBody ResendCodeRequestDTO request) {
+
+        authService.resendVerificationCode(request.getEmail());
+
+        return ApiResponse.of("Verification code sent successfully", 200, null);
     }
 
     // TEMP

@@ -1,7 +1,6 @@
 package com.campusfood.backend.service;
 
 import java.util.List;
-import java.util.UUID;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,18 +16,19 @@ import com.campusfood.backend.exception.auth.EmailAlreadyExistsException;
 import com.campusfood.backend.exception.auth.InvalidCredentialsException;
 import com.campusfood.backend.repository.AuthRepository;
 
-import jakarta.validation.Valid;
-
 @Service
 public class AuthService {
 
     private final AuthRepository authRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     public AuthService(AuthRepository authRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            EmailService emailService) {
         this.authRepository = authRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
     public SignupResponseDTO signup(SignupRequestDTO request) {
@@ -62,13 +62,26 @@ public class AuthService {
                 .department(request.getDepartment())
                 .yearOfStudy(request.getYearOfStudy())
                 .emailVerified(false)
-                .emailVerificationToken(UUID.randomUUID().toString())
                 .build();
+
+        // Generate and set verification code
+        String code = generateVerificationCode();
+        user.setVerificationCode(code);
+        user.setVerificationCodeExpiresAt(java.time.LocalDateTime.now().plusMinutes(15));
 
         // 4️⃣ Save user
         User savedUser = authRepository.save(user);
 
-        // 5️⃣ Return response
+        // 5️⃣ Send verification email
+        try {
+            emailService.sendVerificationEmail(savedUser.getEmail(), code);
+        } catch (Exception e) {
+            // Log error but don't fail signup? Or fail?
+            // For now, let's print stack trace so we know if it fails.
+            e.printStackTrace();
+        }
+
+        // 6️⃣ Return response
         return new SignupResponseDTO(
                 savedUser.getId(),
                 savedUser.getUsername(),
@@ -111,6 +124,49 @@ public class AuthService {
                 .accessToken(null) // add later
                 .refreshToken(null) // add later
                 .build();
+    }
+
+    public void verifyEmail(String email, String code) {
+        User user = authRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (user.isEmailVerified()) {
+            throw new IllegalStateException("Email already verified");
+        }
+
+        if (user.getVerificationCode() == null ||
+                !user.getVerificationCode().equals(code)) {
+            throw new IllegalArgumentException("Invalid verification code");
+        }
+
+        if (user.getVerificationCodeExpiresAt().isBefore(java.time.LocalDateTime.now())) {
+            throw new IllegalStateException("Verification code expired");
+        }
+
+        user.setEmailVerified(true);
+        user.setVerificationCode(null);
+        user.setVerificationCodeExpiresAt(null);
+        authRepository.save(user);
+    }
+
+    public void resendVerificationCode(String email) {
+        User user = authRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (user.isEmailVerified()) {
+            throw new IllegalStateException("Email already verified");
+        }
+
+        String code = generateVerificationCode();
+        user.setVerificationCode(code);
+        user.setVerificationCodeExpiresAt(java.time.LocalDateTime.now().plusMinutes(15));
+        authRepository.save(user);
+
+        emailService.sendVerificationEmail(email, code);
+    }
+
+    private String generateVerificationCode() {
+        return String.valueOf(new java.util.Random().nextInt(900000) + 100000);
     }
 
     // TEMP: admin-only later
