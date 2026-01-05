@@ -1,20 +1,23 @@
 package com.campusfood.backend.dto.auth;
 
-import com.campusfood.backend.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Response DTO for logout endpoint (POST /api/auth/logout)
+ * 
+ * Example response:
+ * {
+ *   "message": "Logged out successfully"
+ * }
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SignupResponseDTO {
+public class LogoutResponseDTO {
 
-    private Long id;
-    private String username;
-    private String email;
-    private Role role;
-    private boolean emailVerified;
+    private String message;
 }

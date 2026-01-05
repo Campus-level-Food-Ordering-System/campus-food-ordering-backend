@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .message {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: #555;
+        }
+
+        .code-box {
+            background-color: #f9f9f9;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .code {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+            letter-spacing: 5px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .expiry {
+            font-size: 14px;
+            color: #ff6b6b;
+            margin-top: 15px;
+            font-style: italic;
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 25px 0;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #856404;
+        }
+
+        .footer {
+            background-color: #f5f5f5;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            border-top: 1px solid #ddd;
+        }
+
+        .footer-link {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: #eee;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                width: 100%;
+                box-shadow: none;
+            }
+
+            .content {
+                padding: 25px 15px;
+            }
+
+            .code {
+                font-size: 28px;
+                letter-spacing: 3px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Campus Food Ordering</h1>
+            <p>Email Verification</p>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <p class="greeting">Hi there,</p>
+
+            <p class="message">
+                Thank you for signing up for Campus Food Ordering! To complete your registration, 
+                please verify your email address using the code below.
+            </p>
+
+            <!-- Verification Code -->
+            <div class="code-box">
+                <p style="font-size: 14px; color: #888; margin-bottom: 10px;">Your verification code:</p>
+                <div class="code" th:text="${code}">123456</div>
+                <p class="expiry">Expires in <span th:text="${expiryMinutes}">15</span> minutes</p>
+            </div>
+
+            <p class="message">
+                Simply copy this code and paste it into the verification field on our website to confirm your email address.
+            </p>
+
+            <!-- Security Warning -->
+            <div class="warning">
+                <strong>⚠️ Security Notice:</strong> If you didn't sign up for this account, please ignore this email. 
+                Do not share this code with anyone.
+            </div>
+
+            <div class="divider"></div>
+
+            <p class="message" style="font-size: 14px;">
+                Need help? Contact us at <a href="mailto:#" th:href="'mailto:' + ${supportEmail}" style="color: #667eea; text-decoration: none;" th:text="${supportEmail}">support@campusfood.com</a>
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>&copy; 2026 Campus Food Ordering. All rights reserved.</p>
+            <p>
+                <a href="#" class="footer-link">Privacy Policy</a> | 
+                <a href="#" class="footer-link">Terms of Service</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
