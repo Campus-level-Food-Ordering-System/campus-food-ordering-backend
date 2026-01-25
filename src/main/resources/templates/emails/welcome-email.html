@@ -1,307 +1,327 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to Campus Food</title>
+    <!--[if mso]>
+    <noscript>
+    <xml>
+    <o:OfficeDocumentSettings>
+    <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+    </xml>
+    </noscript>
+    <![endif]-->
     <style>
-        * {
+        /* Resets */
+        body,
+        table,
+        td,
+        p,
+        a,
+        li,
+        blockquote {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+
+        table,
+        td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+
+        img {
+            -ms-interpolation-mode: bicubic;
+        }
+
+        /* Core Styles */
+        body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+            background-color: #F4F6F8;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            color: #1F2937;
+            line-height: 1.5;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
+        /* Typography */
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+            padding: 0;
+            color: #111827;
         }
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        p {
+            margin: 0;
+            margin-bottom: 24px;
+            color: #4B5563;
+            font-size: 16px;
         }
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px 30px;
+        ul,
+        ol {
+            margin: 0;
+            margin-bottom: 24px;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 12px;
+            color: #4B5563;
+        }
+
+        /* Utilities */
+        .w-full {
+            width: 100%;
+        }
+
+        .text-center {
             text-align: center;
         }
 
-        .header h1 {
-            font-size: 32px;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            font-size: 16px;
-            opacity: 0.95;
-        }
-
-        .content {
-            padding: 40px 30px;
-        }
-
-        .greeting {
-            font-size: 20px;
+        .font-bold {
             font-weight: bold;
-            margin-bottom: 20px;
-            color: #333;
         }
 
-        .intro {
-            font-size: 16px;
-            line-height: 1.6;
-            margin-bottom: 30px;
-            color: #555;
+        /* Custom Classes */
+        .wrapper {
+            width: 100%;
+            table-layout: fixed;
+            background-color: #F4F6F8;
+            padding-bottom: 40px;
         }
 
-        .features {
-            margin: 30px 0;
+        .main-card {
+            background-color: #ffffff;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 600px;
+            border-radius: 16px;
+            border: 1px solid #E5E7EB;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
         }
 
-        .feature-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 15px;
+        .header-section {
+            padding: 40px 48px;
+            background-color: #ffffff;
         }
 
-        .feature-list {
-            list-style: none;
-            margin-bottom: 30px;
+        .logo-text {
+            font-size: 24px;
+            font-weight: 800;
+            color: #4F46E5;
+            /* Indigo 600 */
+            letter-spacing: -0.025em;
+            text-transform: uppercase;
         }
 
-        .feature-list li {
-            padding: 12px 0;
-            padding-left: 30px;
-            position: relative;
-            font-size: 15px;
-            color: #555;
-            line-height: 1.6;
-        }
-
-        .feature-list li:before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: #667eea;
-            font-weight: bold;
-            font-size: 18px;
+        .hero-text {
+            font-size: 30px;
+            font-weight: 800;
+            color: #111827;
+            margin-bottom: 16px;
+            letter-spacing: -0.025em;
         }
 
         .cta-button {
-            display: block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 16px 40px;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 16px;
-            text-align: center;
-            margin: 30px 0;
-            transition: transform 0.2s;
-        }
-
-        .cta-button:hover {
-            transform: scale(1.05);
-        }
-
-        .next-steps {
-            background-color: #f9f9f9;
-            padding: 20px;
-            border-radius: 6px;
-            margin: 30px 0;
-        }
-
-        .next-steps h3 {
-            color: #667eea;
-            margin-bottom: 15px;
-            font-size: 16px;
-        }
-
-        .next-steps ol {
-            margin-left: 20px;
-            line-height: 1.8;
-        }
-
-        .next-steps li {
-            margin-bottom: 10px;
-            font-size: 14px;
-            color: #555;
-        }
-
-        .highlight {
-            background-color: #f0f3ff;
-            border-left: 4px solid #667eea;
-            padding: 15px;
-            margin: 25px 0;
-            border-radius: 4px;
-            font-size: 14px;
-            color: #333;
-        }
-
-        .divider {
-            height: 1px;
-            background-color: #eee;
-            margin: 30px 0;
-        }
-
-        .contact-section {
-            text-align: center;
-            margin: 30px 0;
-        }
-
-        .contact-section p {
-            font-size: 14px;
-            color: #555;
-            margin-bottom: 10px;
-        }
-
-        .contact-link {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .contact-link:hover {
-            text-decoration: underline;
-        }
-
-        .footer {
-            background-color: #f5f5f5;
-            padding: 20px 30px;
-            text-align: center;
-            font-size: 12px;
-            color: #888;
-            border-top: 1px solid #ddd;
-        }
-
-        .footer-link {
-            color: #667eea;
-            text-decoration: none;
-        }
-
-        .footer-link:hover {
-            text-decoration: underline;
-        }
-
-        .social-links {
-            margin-top: 15px;
-        }
-
-        .social-links a {
             display: inline-block;
-            margin: 0 8px;
-            color: #667eea;
+            background-color: #4F46E5;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
             text-decoration: none;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 24px 0;
+            box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
+            text-align: center;
         }
 
-        @media (max-width: 600px) {
-            .container {
-                width: 100%;
-                box-shadow: none;
+        .feature-box {
+            background-color: #F9FAFB;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .feature-item {
+            display: table;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .check-icon {
+            color: #4F46E5;
+            font-weight: bold;
+            padding-right: 12px;
+            font-size: 18px;
+            display: table-cell;
+            vertical-align: top;
+            width: 24px;
+        }
+
+        .feature-text {
+            display: table-cell;
+            vertical-align: top;
+            font-size: 15px;
+            color: #4B5563;
+        }
+
+        .highlight-box {
+            background-color: #EEF2FF;
+            border-left: 4px solid #6366F1;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 32px;
+        }
+
+        .footer-section {
+            background-color: #F9FAFB;
+            border-top: 1px solid #F3F4F6;
+            padding: 32px 48px;
+            text-align: center;
+        }
+
+        .footer-text {
+            font-size: 12px;
+            color: #9CA3AF;
+            line-height: 1.5;
+        }
+
+        .footer-links a {
+            color: #6B7280;
+            text-decoration: none;
+            margin: 0 8px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .footer-links a:hover {
+            color: #4F46E5;
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media only screen and (max-width: 600px) {
+            .wrapper {
+                padding-bottom: 0;
             }
 
-            .content {
-                padding: 25px 15px;
+            .main-card {
+                width: 100% !important;
+                border-radius: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
             }
 
-            .header {
-                padding: 30px 15px;
+            .header-section {
+                padding: 32px 24px !important;
+            }
+
+            .hero-text {
+                font-size: 24px !important;
+            }
+
+            .footer-section {
+                padding: 32px 24px !important;
             }
 
             .cta-button {
                 display: block;
                 width: 100%;
-                padding: 14px 20px;
+                box-sizing: border-box;
             }
         }
     </style>
 </head>
+
 <body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <h1>Welcome! 🎉</h1>
-            <p>Your Campus Food Ordering account is ready</p>
-        </div>
+    <div class="wrapper">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+                <td align="center" style="padding-top: 40px; padding-bottom: 40px;">
+                    <!-- Main Card -->
+                    <table class="main-card" role="presentation" border="0" cellpadding="0" cellspacing="0">
+                        <!-- Content -->
+                        <tr>
+                            <td class="header-section">
+                                <!-- Branding -->
+                                <div style="margin-bottom: 32px; text-align: center;">
+                                    <span class="logo-text">Campus Food</span>
+                                </div>
 
-        <!-- Main Content -->
-        <div class="content">
-            <p class="greeting" th:text="'Hello, ' + ${username} + '!'">Hello, User!</p>
+                                <!-- Hero -->
+                                <h1 class="hero-text" style="text-align: center;">Welcome Aboard! 🎉</h1>
 
-            <p class="intro">
-                Thank you for signing up! We're excited to have you join Campus Food Ordering. 
-                Your account is now active and you can start ordering delicious food from your favorite campus vendors.
-            </p>
+                                <p style="text-align: center;">
+                                    <span th:text="'Hello, ' + ${username} + '!'">Hello, User!</span> Thank you for
+                                    joining Campus Food Ordering. We're excited to help you discover the best food on
+                                    campus.
+                                </p>
 
-            <!-- CTA Button -->
-            <a href="#" class="cta-button">Start Ordering Now</a>
+                                <div style="text-align: center;">
+                                    <a href="#" class="cta-button">Start Ordering</a>
+                                </div>
 
-            <!-- Features Section -->
-            <div class="features">
-                <p class="feature-title">What you can do now:</p>
-                <ul class="feature-list">
-                    <li>Browse menus from all campus food vendors</li>
-                    <li>Place orders with real-time order tracking</li>
-                    <li>Save your favorite meals for quick ordering</li>
-                    <li>Track delivery status with live updates</li>
-                    <li>Manage your payment methods securely</li>
-                    <li>View your order history and ratings</li>
-                </ul>
-            </div>
+                                <!-- Features -->
+                                <p style="font-weight: 600; color: #111827; margin-bottom: 16px;">What you can do now:
+                                </p>
+                                <div class="feature-box">
+                                    <div class="feature-item">
+                                        <span class="check-icon">&#10003;</span>
+                                        <span class="feature-text">Browse menus from top campus vendors</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <span class="check-icon">&#10003;</span>
+                                        <span class="feature-text">Track your orders in real-time</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <span class="check-icon">&#10003;</span>
+                                        <span class="feature-text">Exclusive deals for students</span>
+                                    </div>
+                                </div>
 
-            <!-- Getting Started -->
-            <div class="next-steps">
-                <h3>Getting Started (3 easy steps):</h3>
-                <ol>
-                    <li><strong>Complete Your Profile:</strong> Add your delivery address and phone number</li>
-                    <li><strong>Add Payment Method:</strong> Save your card for faster checkout</li>
-                    <li><strong>Explore Vendors:</strong> Check out available restaurants and their menus</li>
-                </ol>
-            </div>
+                                <!-- Highlight -->
+                                <div class="highlight-box">
+                                    <p style="margin: 0; color: #1E1B4B; font-size: 14px;">
+                                        <strong>🎁 New User Bonus:</strong> Check your "Offers" tab for a special
+                                        welcome discount on your first order!
+                                    </p>
+                                </div>
 
-            <!-- Highlight Box -->
-            <div class="highlight">
-                <strong>🎁 New User Bonus:</strong> You're eligible for special discounts and promotions! 
-                Check the "Offers" section in your app to see available deals.
-            </div>
+                                <p style="font-size: 14px; margin-bottom: 0px; text-align: center;">
+                                    Have questions? <a href="#" th:href="'mailto:' + ${supportEmail}"
+                                        style="color: #4F46E5; text-decoration: none; font-weight: 600;"
+                                        th:text="${supportEmail}">support@campusfood.com</a>
+                                </p>
+                            </td>
+                        </tr>
 
-            <div class="divider"></div>
-
-            <!-- Contact Section -->
-            <div class="contact-section">
-                <p><strong>Questions or need help?</strong></p>
-                <p>
-                    Our support team is here to help at 
-                    <a href="mailto:#" th:href="'mailto:' + ${supportEmail}" class="contact-link" th:text="${supportEmail}">support@campusfood.com</a>
-                </p>
-            </div>
-
-            <p class="intro" style="text-align: center; margin-top: 30px; color: #888;">
-                Happy ordering! 🍕🍔🍜
-            </p>
-        </div>
-
-        <!-- Footer -->
-        <div class="footer">
-            <p>&copy; 2026 Campus Food Ordering. All rights reserved.</p>
-            <p>
-                <a href="#" class="footer-link">Privacy Policy</a> | 
-                <a href="#" class="footer-link">Terms of Service</a>
-            </p>
-            <div class="social-links">
-                <a href="#">Facebook</a>
-                <a href="#">Twitter</a>
-                <a href="#">Instagram</a>
-            </div>
-        </div>
+                        <!-- Footer -->
+                        <tr>
+                            <td class="footer-section">
+                                <p class="footer-text" style="margin-bottom: 16px;">
+                                    &copy; 2026 Campus Food Ordering System.<br>
+                                    All rights reserved.
+                                </p>
+                                <div class="footer-links">
+                                    <a href="#">Privacy Policy</a> &bull;
+                                    <a href="#">Terms of Service</a> &bull;
+                                    <a href="#">Instagram</a>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
     </div>
 </body>
+
 </html>

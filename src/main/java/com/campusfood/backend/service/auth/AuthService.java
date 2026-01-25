@@ -6,6 +6,7 @@ import com.campusfood.backend.enums.AuthType;
 import com.campusfood.backend.enums.Role;
 import com.campusfood.backend.exception.auth.EmailAlreadyExistsException;
 import com.campusfood.backend.exception.auth.InvalidCredentialsException;
+import com.campusfood.backend.exception.auth.TokenRevokedException;
 import com.campusfood.backend.repository.auth.UserRepository;
 import com.campusfood.backend.security.CustomUserDetails;
 import com.campusfood.backend.security.jwt.JwtService;
@@ -91,8 +92,8 @@ public class AuthService {
         }
 
         // 2. Parse role and auth type from enum (not string parsing)
-        Role role = request.getRole();  // Assuming DTO accepts Role enum
-        AuthType authType = request.getAuthType();  // Assuming DTO accepts AuthType enum
+        Role role = request.getRole(); // Assuming DTO accepts Role enum
+        AuthType authType = request.getAuthType(); // Assuming DTO accepts AuthType enum
 
         // 3. Create user entity
         User user = User.builder()
@@ -100,8 +101,7 @@ public class AuthService {
                 .email(request.getEmail())
                 .password(authType == AuthType.PASSWORD
                         ? passwordEncoder.encode(request.getPassword())
-                        : null
-                )
+                        : null)
                 .role(role)
                 .authType(authType)
                 .collegeName(request.getCollegeName())
@@ -114,8 +114,7 @@ public class AuthService {
         String verificationCode = generateVerificationCode();
         user.setVerificationCode(verificationCode);
         user.setVerificationCodeExpiresAt(
-                Instant.now().plusSeconds(VERIFICATION_CODE_EXPIRY_MINUTES * 60)
-        );
+                Instant.now().plusSeconds(VERIFICATION_CODE_EXPIRY_MINUTES * 60));
 
         // 5. Save to DB
         User savedUser = userRepository.save(user);
@@ -154,9 +153,9 @@ public class AuthService {
      * After verification, user can signin
      * 
      * @param email user's email
-     * @param code 6-digit verification code
+     * @param code  6-digit verification code
      * @throws IllegalArgumentException if user not found or code invalid
-     * @throws IllegalStateException if email already verified or code expired
+     * @throws IllegalStateException    if email already verified or code expired
      */
     public void verifyEmail(String email, String code) {
         log.info("Email verification request for: {}", email);
@@ -223,8 +222,7 @@ public class AuthService {
         String newCode = generateVerificationCode();
         user.setVerificationCode(newCode);
         user.setVerificationCodeExpiresAt(
-                Instant.now().plusSeconds(VERIFICATION_CODE_EXPIRY_MINUTES * 60)
-        );
+                Instant.now().plusSeconds(VERIFICATION_CODE_EXPIRY_MINUTES * 60));
         userRepository.save(user);
 
         // 4. Send email
@@ -257,9 +255,9 @@ public class AuthService {
      * @param request signin request with email + password
      * @return user info + access token
      * @throws InvalidCredentialsException if email/password invalid
-     * @throws IllegalStateException if email not verified
+     * @throws IllegalStateException       if email not verified
      */
-    public SigninResponseDTO signin(SigninRequestDTO request) {
+    public SigninResult signin(SigninRequestDTO request) {
         log.info("Signin request for email: {}", request.getEmail());
 
         // 1. Authenticate user (email + password)
@@ -267,9 +265,7 @@ public class AuthService {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getEmail(),
-                            request.getPassword()
-                    )
-            );
+                            request.getPassword()));
 
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             User user = userDetails.getUser();
@@ -290,15 +286,17 @@ public class AuthService {
             log.info("Tokens generated for user: {}", user.getId());
 
             // 4. Return response
-            return SigninResponseDTO.builder()
-                    .id(user.getId())
-                    .username(user.getUsername())
-                    .email(user.getEmail())
-                    .role(user.getRole())
-                    .accessToken(accessToken)
-                    .tokenType("Bearer")
-                    .expiresIn(900) // 15 minutes
-                    .build();
+            return new SigninResult(
+                    SigninResponseDTO.builder()
+                            .id(user.getId())
+                            .username(user.getUsername())
+                            .email(user.getEmail())
+                            .role(user.getRole())
+                            .accessToken(accessToken)
+                            .tokenType("Bearer")
+                            .expiresIn(900)
+                            .build(),
+                    refreshToken);
 
         } catch (org.springframework.security.core.AuthenticationException e) {
             log.warn("Authentication failed for email: {}", request.getEmail());
@@ -307,7 +305,61 @@ public class AuthService {
     }
 
     // ============================================
-    // 4. PASSWORD RESET
+    // 4. REFRESH ACCESS TOKEN
+    // ============================================
+
+    /**
+     * REFRESH ACCESS TOKEN
+     * Generate a new access token using a valid refresh token
+     * 
+     * FLOW:
+     * 1. Receive refresh token from controller (cookie)
+     * 2. Validate refresh token (JWT validation + DB check)
+     * 3. Rotate refresh token (old revoked, new created)
+     * 4. Extract user from refresh token
+     * 5. Generate new access token (short-lived)
+     * 6. Return access token + metadata
+     * 
+     * SECURITY:
+     * - Refresh token rotation is enforced
+     * - Reuse of revoked refresh token revokes ALL sessions
+     * - Access token remains stateless
+     * 
+     * @param refreshToken plain refresh token from HttpOnly cookie
+     * @return new access token response
+     * @throws TokenRevokedException if refresh token is invalid or expired
+     */
+    public RefreshTokenResult refreshAccessToken(String refreshToken) {
+        log.info("Refreshing access token");
+
+        // 1. Rotate refresh token (validate + revoke old + create new)
+        String newRefreshToken = refreshTokenService.rotateRefreshToken(refreshToken);
+        log.info("Refresh token rotated successfully");
+
+        // 2. Extract user details from refresh token
+        String email = jwtService.extractUsername(refreshToken);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new TokenRevokedException("User not found"));
+
+        CustomUserDetails userDetails = new CustomUserDetails(user);
+
+        log.info("Generating new access token for user: {}", user.getId());
+
+        // 3. Generate new access token
+        String newAccessToken = jwtService.generateAccessToken(userDetails);
+
+        // 4. Return result (controller will set cookie)
+        return new RefreshTokenResult(
+                RefreshTokenResponseDTO.builder()
+                        .accessToken(newAccessToken)
+                        .tokenType("Bearer")
+                        .expiresIn(900) // 15 minutes
+                        .build(),
+                newRefreshToken);
+    }
+
+    // ============================================
+    // 5. PASSWORD RESET
     // ============================================
 
     /**
@@ -338,8 +390,7 @@ public class AuthService {
         String resetCode = generateVerificationCode();
         user.setPasswordResetCode(resetCode);
         user.setPasswordResetCodeExpiresAt(
-                Instant.now().plusSeconds(PASSWORD_RESET_CODE_EXPIRY_MINUTES * 60)
-        );
+                Instant.now().plusSeconds(PASSWORD_RESET_CODE_EXPIRY_MINUTES * 60));
         userRepository.save(user);
 
         log.info("Password reset code generated for user: {}", user.getId());
@@ -368,7 +419,7 @@ public class AuthService {
      * 
      * @param request contains email, reset code, new password
      * @throws IllegalArgumentException if user not found or code invalid
-     * @throws IllegalStateException if code expired
+     * @throws IllegalStateException    if code expired
      */
     public void resetPassword(ResetPasswordRequestDTO request) {
         log.info("Reset password request for: {}", request.getEmail());

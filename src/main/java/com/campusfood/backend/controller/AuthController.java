@@ -27,7 +27,8 @@ import java.util.List;
  * - 403: Forbidden (access denied)
  * - 500: Server Error
  * 
- * Refresh tokens are sent as HttpOnly cookies (secure, not accessible from JavaScript)
+ * Refresh tokens are sent as HttpOnly cookies (secure, not accessible from
+ * JavaScript)
  * Access tokens are sent in response body (Authorization: Bearer <token>)
  */
 @Slf4j
@@ -53,27 +54,27 @@ public class AuthController {
      * 
      * Request body:
      * {
-     *   "username": "john_doe",
-     *   "email": "john@example.com",
-     *   "password": "SecurePassword123!",
-     *   "role": "USER",
-     *   "authType": "PASSWORD",
-     *   "collegeName": "XYZ College",
-     *   "department": "Computer Science",
-     *   "yearOfStudy": "2"
+     * "username": "john_doe",
+     * "email": "john@example.com",
+     * "password": "SecurePassword123!",
+     * "role": "USER",
+     * "authType": "PASSWORD",
+     * "collegeName": "XYZ College",
+     * "department": "Computer Science",
+     * "yearOfStudy": "2"
      * }
      * 
      * Response:
      * {
-     *   "message": "User signed up successfully",
-     *   "status": 201,
-     *   "data": {
-     *     "id": 1,
-     *     "username": "john_doe",
-     *     "email": "john@example.com",
-     *     "role": "USER",
-     *     "emailVerified": false
-     *   }
+     * "message": "User signed up successfully",
+     * "status": 201,
+     * "data": {
+     * "id": 1,
+     * "username": "john_doe",
+     * "email": "john@example.com",
+     * "role": "USER",
+     * "emailVerified": false
+     * }
      * }
      * 
      * NOTE: User cannot signin until email is verified
@@ -96,15 +97,15 @@ public class AuthController {
      * 
      * Request body:
      * {
-     *   "email": "john@example.com",
-     *   "code": "123456"
+     * "email": "john@example.com",
+     * "code": "123456"
      * }
      * 
      * Response:
      * {
-     *   "message": "Email verified successfully",
-     *   "status": 200,
-     *   "data": null
+     * "message": "Email verified successfully",
+     * "status": 200,
+     * "data": null
      * }
      * 
      * NOTE: User can signin after email is verified
@@ -123,14 +124,14 @@ public class AuthController {
      * 
      * Request body:
      * {
-     *   "email": "john@example.com"
+     * "email": "john@example.com"
      * }
      * 
      * Response:
      * {
-     *   "message": "Verification code sent successfully",
-     *   "status": 200,
-     *   "data": null
+     * "message": "Verification code sent successfully",
+     * "status": 200,
+     * "data": null
      * }
      */
     @PostMapping("/resend-verification-code")
@@ -151,27 +152,28 @@ public class AuthController {
      * 
      * Request body:
      * {
-     *   "email": "john@example.com",
-     *   "password": "SecurePassword123!",
-     *   "role": "USER"
+     * "email": "john@example.com",
+     * "password": "SecurePassword123!",
+     * "role": "USER"
      * }
      * 
      * Response headers:
-     * Set-Cookie: REFRESH_TOKEN=<refreshToken>; HttpOnly; Secure; SameSite=Lax; Path=/api/auth/refresh; Max-Age=604800
+     * Set-Cookie: REFRESH_TOKEN=<refreshToken>; HttpOnly; Secure; SameSite=Lax;
+     * Path=/api/auth/refresh; Max-Age=604800
      * 
      * Response body:
      * {
-     *   "message": "User signed in successfully",
-     *   "status": 200,
-     *   "data": {
-     *     "id": 1,
-     *     "username": "john_doe",
-     *     "email": "john@example.com",
-     *     "role": "USER",
-     *     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-     *     "tokenType": "Bearer",
-     *     "expiresIn": 900
-     *   }
+     * "message": "User signed in successfully",
+     * "status": 200,
+     * "data": {
+     * "id": 1,
+     * "username": "john_doe",
+     * "email": "john@example.com",
+     * "role": "USER",
+     * "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+     * "tokenType": "Bearer",
+     * "expiresIn": 900
+     * }
      * }
      * 
      * CLIENT USAGE:
@@ -184,30 +186,31 @@ public class AuthController {
     public ApiResponse<SigninResponseDTO> signin(
             @Valid @RequestBody SigninRequestDTO request,
             HttpServletResponse response) {
+
         log.info("Signin endpoint called for: {}", request.getEmail());
 
-        // 1. Authenticate user
-        SigninResponseDTO result = authService.signin(request);
+        // 1. Authenticate + generate tokens
+        SigninResult result = authService.signin(request);
 
-        // 2. Extract refresh token from service (we need to regenerate it here for the cookie)
-        // Note: in production, the refresh token should be returned from signin
-        String deviceId = "device_" + System.currentTimeMillis();
-        // For now, we'll set a secure cookie with instructions
-
-        // 3. Set refresh token in HttpOnly cookie
+        // 2. Store REFRESH TOKEN in HttpOnly cookie
         ResponseCookie refreshCookie = ResponseCookie
-                .from("REFRESH_TOKEN", generateMockRefreshToken())
+                .from("REFRESH_TOKEN", result.getRefreshToken())
                 .httpOnly(true)
-                .secure(false) // set to true in production (HTTPS only)
+                .secure(false) // true in production (HTTPS)
                 .sameSite("Lax")
                 .path("/api/auth/refresh")
                 .maxAge(Duration.ofDays(7))
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-        log.info("Refresh token cookie set for user: {}", result.getId());
 
-        return ApiResponse.of("User signed in successfully", 200, result);
+        log.info("Signin successful for user: {}", result.getResponse().getEmail());
+
+        // 3. Return ACCESS TOKEN in response body
+        return ApiResponse.of(
+                "User signed in successfully",
+                200,
+                result.getResponse());
     }
 
     // ========================================
@@ -226,13 +229,13 @@ public class AuthController {
      * 
      * Response body:
      * {
-     *   "message": "Access token refreshed successfully",
-     *   "status": 200,
-     *   "data": {
-     *     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-     *     "tokenType": "Bearer",
-     *     "expiresIn": 900
-     *   }
+     * "message": "Access token refreshed successfully",
+     * "status": 200,
+     * "data": {
+     * "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+     * "tokenType": "Bearer",
+     * "expiresIn": 900
+     * }
      * }
      * 
      * SECURITY:
@@ -244,44 +247,34 @@ public class AuthController {
     public ApiResponse<RefreshTokenResponseDTO> refresh(
             @CookieValue(value = "REFRESH_TOKEN", required = false) String refreshToken,
             HttpServletResponse response) {
+
         log.info("Refresh token endpoint called");
 
         if (refreshToken == null) {
-            throw new IllegalArgumentException("Refresh token not found in cookie. Please signin again.");
+            throw new IllegalArgumentException("Refresh token not found. Please signin again.");
         }
 
-        try {
-            // 1. Rotate refresh token (validate + revoke old + create new)
-            String newRefreshToken = refreshTokenService.rotateRefreshToken(refreshToken);
-            log.info("Refresh token rotated successfully");
+        // 1. Refresh access + rotate refresh token
+        RefreshTokenResult result = authService.refreshAccessToken(refreshToken);
 
-            // 2. Generate new access token
-            // (in real implementation, extract user from token and generate)
-            String newAccessToken = generateMockAccessToken();
+        // 2. Update refresh token cookie
+        ResponseCookie newCookie = ResponseCookie
+                .from("REFRESH_TOKEN", result.getRefreshToken())
+                .httpOnly(true)
+                .secure(false) // true in prod
+                .sameSite("Lax")
+                .path("/api/auth/refresh")
+                .maxAge(Duration.ofDays(7))
+                .build();
 
-            // 3. Set new refresh token in cookie
-            ResponseCookie newCookie = ResponseCookie
-                    .from("REFRESH_TOKEN", newRefreshToken)
-                    .httpOnly(true)
-                    .secure(false)
-                    .sameSite("Lax")
-                    .path("/api/auth/refresh")
-                    .maxAge(Duration.ofDays(7))
-                    .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, newCookie.toString());
 
-            response.addHeader(HttpHeaders.SET_COOKIE, newCookie.toString());
+        log.info("Access token refreshed successfully");
 
-            return ApiResponse.of("Access token refreshed successfully", 200,
-                    RefreshTokenResponseDTO.builder()
-                            .accessToken(newAccessToken)
-                            .tokenType("Bearer")
-                            .expiresIn(900)
-                            .build());
-
-        } catch (Exception e) {
-            log.error("Refresh failed: {}", e.getMessage());
-            throw e;
-        }
+        return ApiResponse.of(
+                "Access token refreshed successfully",
+                200,
+                result.getResponse());
     }
 
     // ========================================
@@ -297,9 +290,9 @@ public class AuthController {
      * 
      * Response:
      * {
-     *   "message": "Logged out successfully",
-     *   "status": 200,
-     *   "data": null
+     * "message": "Logged out successfully",
+     * "status": 200,
+     * "data": null
      * }
      * 
      * NOTE: Clears refresh token cookie
@@ -342,14 +335,14 @@ public class AuthController {
      * 
      * Request body:
      * {
-     *   "email": "john@example.com"
+     * "email": "john@example.com"
      * }
      * 
      * Response:
      * {
-     *   "message": "If email exists, password reset code will be sent",
-     *   "status": 200,
-     *   "data": null
+     * "message": "If email exists, password reset code will be sent",
+     * "status": 200,
+     * "data": null
      * }
      * 
      * NOTE: Returns same message regardless of whether email exists (security)
@@ -359,7 +352,8 @@ public class AuthController {
             @Valid @RequestBody ForgotPasswordRequestDTO request) {
         log.info("Forgot password endpoint called for: {}", request.getEmail());
         authService.forgotPassword(request);
-        return ApiResponse.of("If email exists, password reset code will be sent to it. Code expires in 1 hour.", 200, null);
+        return ApiResponse.of("If email exists, password reset code will be sent to it. Code expires in 1 hour.", 200,
+                null);
     }
 
     /**
@@ -368,16 +362,16 @@ public class AuthController {
      * 
      * Request body:
      * {
-     *   "email": "john@example.com",
-     *   "resetCode": "123456",
-     *   "newPassword": "NewSecurePassword123!"
+     * "email": "john@example.com",
+     * "resetCode": "123456",
+     * "newPassword": "NewSecurePassword123!"
      * }
      * 
      * Response:
      * {
-     *   "message": "Password reset successfully. Please signin with new password.",
-     *   "status": 200,
-     *   "data": null
+     * "message": "Password reset successfully. Please signin with new password.",
+     * "status": 200,
+     * "data": null
      * }
      * 
      * SECURITY:
@@ -404,16 +398,16 @@ public class AuthController {
      * 
      * Response:
      * {
-     *   "message": "Users fetched successfully",
-     *   "status": 200,
-     *   "data": [
-     *     {
-     *       "id": 1,
-     *       "username": "john_doe",
-     *       "email": "john@example.com",
-     *       ...
-     *     }
-     *   ]
+     * "message": "Users fetched successfully",
+     * "status": 200,
+     * "data": [
+     * {
+     * "id": 1,
+     * "username": "john_doe",
+     * "email": "john@example.com",
+     * ...
+     * }
+     * ]
      * }
      */
     @GetMapping("/users")
@@ -423,16 +417,4 @@ public class AuthController {
         return ApiResponse.of("Users fetched successfully", 200, users);
     }
 
-    // ========================================
-    // HELPER METHODS
-    // ========================================
-
-    private String generateMockRefreshToken() {
-        // In real implementation, this comes from RefreshTokenService
-        return "mock_refresh_token_" + System.currentTimeMillis();
-    }
-
-    private String generateMockAccessToken() {
-        // In real implementation, this comes from JwtService
-        return "mock_access_token_" + System.currentTimeMillis();    }
 }
